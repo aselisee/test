@@ -6,7 +6,7 @@ RobotFramework Oracle Library
 Short Description
 -----------------
 
-`Robot Framework`_ library for working with Oracle database, using `cx_Oracle`_.
+`Robot Framework`_ library for working with Oracle database, using `cxOracle`_.
 
 Installation
 ------------
