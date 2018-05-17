@@ -1,54 +1,50 @@
-RobotFramework Zookeeper Manager Library
-========================================
+RobotFramework Oracle Library
+=================================
 
 |Build Status|
 
 Short Description
 -----------------
 
-`Robot Framework`_ library for managing Apache Zookeeper, based on `kazoo`_ python library.
+`Robot Framework`_ library for working with Oracle database, using `cx_Oracle`_.
 
 Installation
 ------------
 
 ::
 
-    pip install robotframework-zookeepermanager
+    pip install robotframework-oracledb
 
 Documentation
 -------------
 
-See keyword documentation for robotframework-zookeepermanager library in folder ``docs``.
+See keyword documentation for robotframework-oracledb library in
+folder ``docs``.
 
 Example
 -------
 +-----------+------------------+
 | Settings  |      Value       |
 +===========+==================+
-|  Library  | ZookeeperManager |
+|  Library  |     OracleDB     |
 +-----------+------------------+
 
-+---------------+---------------------------------+-------------------+-------------------+----------+
-|  Test cases   |               Action            |     Argument      |      Argument     | Argument |
-+===============+=================================+===================+===================+==========+
-|  Simple Test  | Connect To Zookeeper            | 127.0.0.1: 2181   |                   |          |
-+---------------+---------------------------------+-------------------+-------------------+----------+
-|               | Create Node                     | /my/favorite/node | my_value          | ${TRUE}  |
-+---------------+---------------------------------+-------------------+-------------------+----------+
-|               | ${node_exists}=                 | Exists            | /my/favorite/node |          |
-+---------------+---------------------------------+-------------------+-------------------+----------+
-|               | Delete Node                     | /my/favorite/node |                   |          |
-+---------------+---------------------------------+-------------------+-------------------+----------+
-|               | Close All Zookeeper Connections |                   |                   |          |
-+---------------+---------------------------------+-------------------+-------------------+----------+
-
++---------------+---------------------------------------+--------------------+--------------------------+----------+
+|  Test cases   |                  Action               |      Argument      |         Argument         | Argument |
++===============+=======================================+====================+==========================+==========+
+|  Simple Test  | OracleDB.Connect To Oracle            | rb60db             | username                 | password |
++---------------+---------------------------------------+--------------------+--------------------------+----------+
+|               | @{query}=                             | Execute Sql String | select sysdate from dual |          |
++---------------+---------------------------------------+--------------------+--------------------------+----------+
+|               | OracleDB.Close All Oracle Connections |                    |                          |          |
++---------------+---------------------------------------+--------------------+--------------------------+----------+
 License
 -------
 
 Apache License 2.0
 
 .. _Robot Framework: http://www.robotframework.org
-.. _kazoo: https://github.com/python-zk/kazoo
+.. _psycopg2: http://initd.org/psycopg/
 
-.. |Build Status| image:: https://travis-ci.org/peterservice-rnd/robotframework-zookeepermanager.svg?branch=master
-   :target: https://travis-ci.org/peterservice-rnd/robotframework-zookeepermanager
+.. |Build Status| image:: https://travis-ci.org/peterservice-rnd/robotframework-oracledb.svg?branch=master
+   :target: https://travis-ci.org/peterservice-rnd/robotframework-oracledb
