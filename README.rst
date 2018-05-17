@@ -45,7 +45,7 @@ License
 Apache License 2.0
 
 .. _Robot Framework: http://www.robotframework.org
-.. _psycopg2: http://initd.org/psycopg/
+.. _cx_Oracle: http://initd.org/psycopg/
 
 .. |Build Status| image:: https://travis-ci.org/peterservice-rnd/robotframework-oracledb.svg?branch=master
    :target: https://travis-ci.org/peterservice-rnd/robotframework-oracledb
