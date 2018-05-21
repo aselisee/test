@@ -1,4 +1,4 @@
-"""Setup module for Robot Framework Apache Zookeeper Manager Library package."""
+"""Setup module for Robot Framework OracleDB Library package."""
 
 # To use a consistent encoding
 from codecs import open
@@ -12,12 +12,16 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get install requires from requirements.txt
+with open(path.join(here, 'requirements.txt')) as f:
+    requirements = f.read().splitlines()
+
 setup(
-    name='robotframework-zookeepermanager',
+    name='robotframework-oracledb',
     version='1.0.0',
-    description='Robot Framework library for working with Apache Zookeeper.',
+    description='Robot Framework library for working with Oracle Database.',
     long_description=long_description,
-    url='https://github.com/peterservice-rnd/robotframework-zookeepermanager',
+    url='https://github.com/peterservice-rnd/robotframework-oracledb',
     author='JSC PETER-SERVICE',
     author_email='mf_aist_all@billing.ru',
     license='Apache License 2.0',
@@ -31,12 +35,8 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Framework :: Robot Framework :: Library',
     ],
-    keywords='testing testautomation robotframework autotest zookeeper',
+    keywords='testing testautomation robotframework autotest oracle database',
     package_dir={'': 'src'},
-    py_modules=['ZookeeperManager'],
-    install_requires=[
-        "kazoo==2.2.1",
-        "robotframework",
-        "robotframework-jsonvalidator"
-    ],
+    py_modules=['OracleDB'],
+    install_requires=requirements,
 )
