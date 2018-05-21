@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sqlparse
-
-from html import escape
 from robot.api import logger
 from robot.utils import ConnectionCache
 
