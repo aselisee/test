@@ -21,6 +21,8 @@ class OracleDB(object):
     """
 
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
+    last_executed_statement = None
+    last_executed_statement_params = None
 
     def __init__(self):
         """Library initialization.
@@ -132,26 +134,48 @@ class OracleDB(object):
         self._connection = self._cache.switch(index_or_alias)
         return old_index
 
-    def _execute_sql(self, cursor, statement):
+    def _execute_sql(self, cursor, statement, params):
         """ Execute SQL query on Oracle DB using active connection.
 
         *Args*:\n
             _cursor_: cursor object.\n
             _statement_: SQL query to be executed.\n
+            _params_: SQL query parameters.\n
 
         *Returns:*\n
             Query results.
         """
-        logger.info("Executing :\n %s" % statement)
+        statement_with_params = self._replace_parameters_in_statement(statement, params)
+        logger.info(statement_with_params, html=True)
         cursor.prepare(statement)
-        return cursor.execute(None)
+        self.last_executed_statement = self._replace_parameters_in_statement(statement, params)
+        return cursor.execute(None, params)
 
-    def execute_plsql_block(self, plsqlstatement):
+    def _replace_parameters_in_statement(self, statement, params):
+        """Update SQL query parameters, if any exist, with their values for logging purposes.
+
+        *Args*:\n
+            _statement_: SQL query to be updated.\n
+            _params_: SQL query parameters.\n
+
+        *Returns:*\n
+            SQL query with parameter names replaced with their values.
+        """
+        params_keys = sorted(params.keys(), reverse=True)
+        for key in params_keys:
+            if isinstance(params[key], (int, float)):
+                statement = statement.replace(':{}'.format(key), str(params[key]))
+            else:
+                statement = statement.replace(':{}'.format(key), "'{}'".format(params[key]))
+        return statement
+
+    def execute_plsql_block(self, plsqlstatement, **params):
         """
         PL\SQL block execution.
 
         *Args:*\n
             _plsqlstatement_ - PL\SQL block;\n
+            _params_ - PL\SQL block parameters;\n
 
         *Raises:*\n
             PLSQL Error: Error message encoded according to DB where the code was run
@@ -196,18 +220,19 @@ class OracleDB(object):
         cursor = None
         try:
             cursor = self._connection.cursor()
-            self._execute_sql(cursor, plsqlstatement)
+            self._execute_sql(cursor, plsqlstatement, params)
             self._connection.commit()
         finally:
             if cursor:
                 self._connection.rollback()
 
-    def execute_plsql_block_with_dbms_output(self, plsqlstatement):
+    def execute_plsql_block_with_dbms_output(self, plsqlstatement, **params):
         """
         Execute PL\SQL block with dbms_output().
 
         *Args:*\n
             _plsqlstatement_ - PL\SQL block;\n
+            _params_ - PL\SQL block parameters;\n
 
         *Raises:*\n
             PLSQL Error: Error message encoded according to DB where the code was run.
@@ -260,7 +285,7 @@ class OracleDB(object):
         try:
             cursor = self._connection.cursor()
             cursor.callproc("dbms_output.enable")
-            self._execute_sql(cursor, plsqlstatement)
+            self._execute_sql(cursor, plsqlstatement, params)
             self._connection.commit()
             statusvar = cursor.var(cx_Oracle.NUMBER)
             linevar = cursor.var(cx_Oracle.STRING)
@@ -274,30 +299,33 @@ class OracleDB(object):
             if cursor:
                 self._connection.rollback()
 
-    def execute_plsql_script(self, file_path):
+    def execute_plsql_script(self, file_path, **params):
         """
          Execution of PL\SQL code from file.
 
         *Args:*\n
             _file_path_ - path to PL\SQL script file;\n
+            _params_ - PL\SQL code parameters;\n
 
         *Raises:*\n
             PLSQL Error: Error message encoded according to DB where the code was run.
 
         *Example:*\n
             |  Execute Plsql Script  |  ${CURDIR}${/}plsql_script.sql |
+            |  Execute Plsql Script  |  ${CURDIR}${/}plsql_script.sql | first_param=1 | second_param=2 |
         """
 
         with open(file_path, "r") as script:
             data = script.read()
-            self.execute_plsql_block(data)
+            self.execute_plsql_block(data, **params)
 
-    def execute_sql_string(self, plsqlstatement):
+    def execute_sql_string(self, plsqlstatement, **params):
         """
         Execute PL\SQL string.
 
         *Args:*\n
             _plsqlstatement_ - PL\SQL string;\n
+            _params_ - PL\SQL string parameters;\n
 
         *Raises:*\n
             PLSQL Error: Error message encoded according to DB where the code was run.
@@ -318,7 +346,7 @@ class OracleDB(object):
         cursor = None
         try:
             cursor = self._connection.cursor()
-            self._execute_sql(cursor, plsqlstatement)
+            self._execute_sql(cursor, plsqlstatement, params)
             query_result = cursor.fetchall()
             self.result_logger(query_result)
             return query_result
@@ -326,11 +354,12 @@ class OracleDB(object):
             if cursor:
                 self._connection.rollback()
 
-    def execute_sql_string_mapped(self, sql_statement):
+    def execute_sql_string_mapped(self, sql_statement, **params):
         """SQL query execution where each result row is mapped as a dict with column names as keys.
 
         *Args:*\n
             _sql_statement_ - PL\SQL string;\n
+            _params_ - PL\SQL string parameters;\n
 
         *Returns:*\n
             A list of dictionaries where column names are mapped as keys.
@@ -347,7 +376,7 @@ class OracleDB(object):
         cursor = None
         try:
             cursor = self._connection.cursor()
-            self._execute_sql(cursor, sql_statement)
+            self._execute_sql(cursor, sql_statement, params)
             col_name = tuple(i[0] for i in cursor.description)
             query_result = [dict(zip(col_name, row)) for row in cursor]
             self.result_logger(query_result)
@@ -356,21 +385,24 @@ class OracleDB(object):
             if cursor:
                 self._connection.rollback()
 
-    def execute_sql_string_generator(self, sql_statement):
+    def execute_sql_string_generator(self, sql_statement, **params):
         """Generator that yields each result row mapped as a dict with column names as keys.\n
         Intended for use mainly in code for other keywords.
         *If used, the generator must be explicitly closed before closing DB connection*
 
         *Args:*\n
             _sql_statement_ - PL\SQL string;\n
+            _params_ - PL\SQL string parameters;\n
 
         Yields:*\n
             results dict.
         """
         cursor = None
+        self.last_executed_statement = sql_statement
+        self.last_executed_statement_params = params
         try:
             cursor = self._connection.cursor()
-            self._execute_sql(cursor, sql_statement)
+            self._execute_sql(cursor, sql_statement, params)
             col_name = tuple(i[0] for i in cursor.description)
             for row in cursor:
                 yield dict(zip(col_name, row))
